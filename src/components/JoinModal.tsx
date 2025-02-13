@@ -20,7 +20,7 @@ const JoinModal: React.FC = () => {
                     <div className="mt-8">
                     <ButtonSet >
                       <Button kind="tertiary" onClick={() => setOpen(false)}>Cancel</Button>
-                      <Link to="/4" >
+                      <Link to="/" >
                       <Button kind="primary">Join Room</Button>
                       </Link>
                     </ButtonSet>
