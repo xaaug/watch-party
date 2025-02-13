@@ -7,12 +7,5 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 3000,
-  },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        additionalData: `@import "@carbon/react/scss/globals.scss";`,
-      },
-    },
-  },
+  }
 });

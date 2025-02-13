@@ -10,20 +10,29 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@carbon/icons-react": "^11.55.0",
     "@carbon/react": "^1.76.0",
     "@tailwindcss/vite": "^4.0.6",
     "carbon-components": "^11.66.1",
     "carbon-icons": "^7.0.7",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.1.5",
     "sass": "^1.84.0",
-    "tailwindcss": "^4.0.6"
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "tailwindcss": "^4.0.6",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
     "@types/carbon-components-react": "^7.55.13",
+    "@types/express": "^5.0.0",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "@types/socket.io": "^3.0.1",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.19.0",
     "eslint-plugin-react-hooks": "^5.0.0",
