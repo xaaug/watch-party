@@ -23,6 +23,18 @@ socketIO.on('connection', (socket) => {
     socket.on('message', data => {
        socketIO.emit('messageResponse', data)
     })
+
+    socket.on('PLAY', data => {
+      socketIO.emit('PLAYEVENT' , data)
+    })
+
+    socket.on('MUTE', data => {
+      socketIO.emit('MUTEEVENT', data)
+    })
+
+    socket.on('CURRENTTIME', data => {
+      socketIO.emit('CURRENTTIMEEVENT', data)
+    })
 });
 
 app.get('/api', (req, res) => {

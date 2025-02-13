@@ -43,7 +43,7 @@ const Room: React.FC<Props> = ({socket}) => {
           />
 
           <div className="flex flex-col gap-8">
-            <Video />
+            <Video socket={socket}/>
             <ExpandableTile
               expanded={chatExpanded}
               id="expandable-tile-1"
@@ -52,7 +52,7 @@ const Room: React.FC<Props> = ({socket}) => {
             >
               <TileAboveTheFoldContent>
                 <div>
-                  <p className="text-sm">Chat with people in the room</p>
+                  <p className="text-sm font-mono">Chat with people in the room</p>
                 </div>
               </TileAboveTheFoldContent>
               <TileBelowTheFoldContent>
