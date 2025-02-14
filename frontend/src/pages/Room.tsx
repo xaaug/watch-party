@@ -18,10 +18,16 @@ import ActiveUsers from "../components/ActiveUsers";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
+interface VideoData {
+  url: string
+}
+
 interface Room {
   roomId: string;
   id: string
   messages: Message[]
+  videoData: VideoData
+  hostId: string
 }
 
 type Message = {
@@ -31,7 +37,7 @@ type Message = {
 
 interface Props {
   socket: Socket;
-  fetchData: () => [];
+  fetchData: () => Promise<Room[] | undefined>;
 }
 
 const Room: React.FC<Props> = ({ socket, fetchData }) => {
@@ -47,9 +53,9 @@ const Room: React.FC<Props> = ({ socket, fetchData }) => {
       setLoading(true);
       try {
         const fetchedData = await fetchData();
-        console.log(fetchedData.filter((dt: Room) => dt.roomId === roomId))
-        setRoomData(fetchedData.filter((dt: Room) => dt.roomId === roomId));
-        setRoomPresent(fetchedData.find((dt: Room) => dt.roomId === roomId));
+        if (fetchedData)  
+          { setRoomPresent(!!fetchedData.find((dt: Room) => dt.roomId === roomId));  setRoomData(fetchedData.filter((dt: Room) => dt.roomId === roomId));}
+
       } catch (error) {
         console.error("Error fetching collection:", error);
       } finally {
@@ -75,7 +81,7 @@ const Room: React.FC<Props> = ({ socket, fetchData }) => {
     try {
       const roomRef = doc(db, "rooms", roomId);
       await updateDoc(roomRef, {
-        participant: arrayUnion(userId)
+        participants: arrayUnion(userId)
       });
       console.log("Room updated successfully!");
     } catch (error) {

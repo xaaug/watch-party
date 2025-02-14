@@ -12,6 +12,7 @@ import { db } from "./firebaseConfig";
 import NotFound from "./pages/NotFoundPage";
 const socket = io("http://localhost:4000");
 
+
 const App: React.FC = () => {
 
     const fetchCollection = async () => {
@@ -19,9 +20,17 @@ const App: React.FC = () => {
           const querySnapshot = await getDocs(collection(db, "rooms"));
           const data = querySnapshot.docs.map((doc) => ({
             id: doc.id,
-            ...doc.data(),
+            roomId: (doc.data()).roomId, // Ensure `roomId` exists
+            messages: (doc.data()).messages ?? [], // Default empty array
+            videoData: (doc.data()).videoData ?? { url: "" }, // Default empty object
+            hostId: (doc.data()).hostId ?? "", // Default empty string
+            participants: (doc.data()).participants ?? [], // Default empty array
           }));
-          return data
+         if(data){
+           return data;
+         } else {
+          return undefined;
+         }
         } catch (error) {
           console.error("Error fetching collection:", error);
         }

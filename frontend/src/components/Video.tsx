@@ -14,6 +14,7 @@ import YouTube from "react-youtube";
 import { Socket } from "socket.io-client";
 import { db } from "../firebaseConfig";
 import useAuth from "../hooks/useAuth";
+
 interface VideoData {
   url: string
 }
@@ -27,7 +28,7 @@ interface Room {
 
 interface Props {
   socket: Socket;
-  fetchRoomData: () => Room[]}
+  fetchRoomData: () => Promise<Room[] | undefined>}
 
 const Video: React.FC<Props> = ({ socket, fetchRoomData }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -61,7 +62,7 @@ const Video: React.FC<Props> = ({ socket, fetchRoomData }) => {
     const fetchCollection = async () => {
       try {
         const fetchedData = await fetchRoomData();
-        setRoomData(fetchedData.filter((dt: Room) => dt.roomId === roomId));
+        if (fetchedData) setRoomData(fetchedData.filter((dt: Room) => dt.roomId === roomId));
         if (roomData[0].videoData.url) {
           setVideoId(roomData[0].videoData.url)
         }
@@ -102,6 +103,7 @@ const Video: React.FC<Props> = ({ socket, fetchRoomData }) => {
 
     const handleCurrentTime = (data: { time: number }) => {
       setCurrentTime(data.time);
+      console.log(currentTime)
       if (playerRef.current) {
         playerRef.current.seekTo(data.time, false);
       }
@@ -118,7 +120,7 @@ const Video: React.FC<Props> = ({ socket, fetchRoomData }) => {
 
       socket.off("PLAYEVENT", handlePlayEvent);
     };
-  }, [socket, fetchRoomData, roomId, roomData, user]);
+  }, [socket, fetchRoomData, currentTime, roomId, roomData, user]);
 
   
 

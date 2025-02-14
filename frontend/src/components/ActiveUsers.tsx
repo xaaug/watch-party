@@ -6,7 +6,6 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Socket } from "socket.io-client";
-import useAuth from "../hooks/useAuth";
 
 interface Props {
   socket: Socket;
@@ -22,7 +21,6 @@ const ActiveUsers: React.FC<Props> = ({ socket }) => {
   const [users, setUsers] = useState([]);
   const { roomId } = useParams();
 
-  const {user } = useAuth()
   console.log(roomId);
 
   useEffect(() => {
@@ -47,7 +45,7 @@ const ActiveUsers: React.FC<Props> = ({ socket }) => {
           </TileAboveTheFoldContent>
           <TileBelowTheFoldContent>
             <div className="mt-6 mb-12"><ul className="flex flex-col gap-4 pl-4 list-disc">
-                {users.length > 0 ? users.map((user: User) => <li>{user.user}</li>) : <li>{user?.displayName?.split(' ')[0]}</li>}
+                {users.length > 0 && users.map((user: User) => <li>{user.user}</li>)}
                 </ul>
                 </div>
           </TileBelowTheFoldContent>

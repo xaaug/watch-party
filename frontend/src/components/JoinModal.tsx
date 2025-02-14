@@ -5,16 +5,17 @@ import { useNavigate } from "react-router-dom"
 
 interface Room {
   roomId: string;
+  id: string
 }
 
 interface Props {
-  fetchData: () => [];
+  fetchData: () => Promise<Room[] | undefined>
 }
 
 const JoinModal: React.FC<Props> = ({fetchData}) => {
   const [inputValue, setInputValue] = useState<string>('')
   const [error, setError] = useState<boolean>(false)
-  const [rooms, setRooms] = useState([])
+  const [rooms, setRooms] = useState<Room[]>([])
 
   const navigate = useNavigate()
 
@@ -22,7 +23,7 @@ const JoinModal: React.FC<Props> = ({fetchData}) => {
   const fetchCollection = async () => {
     try {
       const fetchedData = await fetchData();
-      setRooms(fetchedData);
+      if (fetchedData) setRooms(fetchedData);
     //   setRoomPresent(fetchedData.find((dt: Room) => dt.roomId === roomId));
     } catch (error) {
       console.error("Error fetching collection:", error);

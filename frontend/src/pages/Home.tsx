@@ -7,8 +7,9 @@ import { useState } from "react";
 import useAuth from "../hooks/useAuth";
 
 interface Props {
-    fetchData: () => []
-}
+    fetchData: () =>  Promise<{ id: string; roomId: string }[] | undefined>
+    }
+
 
 const Home: React.FC<Props> = ({fetchData}) => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -23,7 +24,7 @@ const Home: React.FC<Props> = ({fetchData}) => {
             roomId: room_id,
             hostId: user?.uid,
             thumbnail: "",
-            participant: [],
+            participants: [],
             videoData: {},
             messages: []
         });
