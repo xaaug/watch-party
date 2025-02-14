@@ -15,7 +15,7 @@ import Chat from "../components/Chat";
 import Video from "../components/Video";
 import useAuth from "../hooks/useAuth";
 import ActiveUsers from "../components/ActiveUsers";
-import { arrayUnion, doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
 interface Room {
@@ -59,34 +59,43 @@ const Room: React.FC<Props> = ({ socket, fetchData }) => {
 
     fetchCollection();
 
-    const updateRoom = async (
-      roomId: string,
-      newData: Partial<{ participant: string }>
-    ) => {
-      try {
-        const roomRef = doc(db, "rooms", roomId);
-        await updateDoc(roomRef, {
-          participant: arrayUnion(newData)
-        });
-        console.log("Room updated successfully!");
-      } catch (error) {
-        console.error("Error updating room:", error);
-      }
-    };
+    if (user?.displayName ) {
+          socket.emit("join", {
+            roomId: roomId,
+            user: user.displayName.split(" ")[0],
+          });}
 
-    if (user?.displayName) {
-      
+
+  }, [roomId, fetchData, user, socket]);
+
+ const updateRoom = async (
+    roomId: string,
+    userId: string
+  ) => {
+    try {
+      const roomRef = doc(db, "rooms", roomId);
+      await updateDoc(roomRef, {
+        participant: arrayUnion(userId)
+      });
+      console.log("Room updated successfully!");
+    } catch (error) {
+      console.error("Error updating room:", error);
+    }
+  };
+
+
+  useEffect(() => {
+    if (user?.displayName && roomData.length > 0) {
       socket.emit("join", {
         roomId: roomId,
-        user: user?.displayName.split(" ")[0],
+        user: user.displayName.split(" ")[0],
       });
-
-      updateRoom(roomData[0].id, {
-        participant: user?.uid,
-      });
-      
+  
+      updateRoom(roomData[0].id, user.uid); // ✅ Ensure `roomData[0]` is available
     }
-  }, [roomId, socket, user, roomData, fetchData]);
+  }, [roomId, socket, user, roomData]);
+
+ 
 
   const handleChatChange = () => {
     setChatExpanded((prev) => !prev);

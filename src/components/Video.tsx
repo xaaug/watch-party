@@ -6,7 +6,7 @@ import {
   VolumeMute,
   VolumeUp,
 } from "@carbon/icons-react";
-import { Tile, Button, TextInput, Loading } from "@carbon/react";
+import { Tile, Button, TextInput } from "@carbon/react";
 import { doc, updateDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -76,7 +76,7 @@ const Video: React.FC<Props> = ({ socket, fetchRoomData }) => {
     fetchCollection()
 
 
-    const handlePlayEvent = (data: { playing: boolean }) => {
+    const handlePlayEvent = (data: { playing: boolean, roomId: string }) => {
       setIsPlaying(data.playing);
       if (playerRef.current) {
         if (data.playing) {
@@ -87,13 +87,12 @@ const Video: React.FC<Props> = ({ socket, fetchRoomData }) => {
       }
     };
 
-    const handleStopEvent = (data: { playing: boolean }) => {
+    const handleStopEvent = (data: { playing: boolean , roomId: string}) => {
       setIsPlaying(data.playing);
       if (playerRef.current) {
-        if (data.playing) {
           playerRef.current.stopVideo();
         }
-      }
+      
     };
 
 
@@ -188,10 +187,12 @@ const Video: React.FC<Props> = ({ socket, fetchRoomData }) => {
 
   const onPlay = () => {
     socket.emit("PLAY", { playing: true, roomId: roomId });
+    playerRef.current?.playVideo()
   };
 
   const onPause = () => {
     socket.emit("PLAY", { playing: false, roomId: roomId });
+    playerRef.current?.pauseVideo()
   };
 
 
@@ -237,6 +238,7 @@ const Video: React.FC<Props> = ({ socket, fetchRoomData }) => {
   //   TODO Emit to all
   const stopVideo = () => {
     socket.emit("STOP", { playing: false, roomId: roomId });
+    playerRef.current?.stopVideo()
   };
 
   return (

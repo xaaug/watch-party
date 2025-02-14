@@ -13,6 +13,7 @@ interface Rooms {
     hostId: string
     roomId: string
     id: string
+    participant: string[]
 }
 
 interface Props {
@@ -23,13 +24,14 @@ const Rooms: React.FC<Props> = ({fetchData}) => {
   const { user } = useAuth();
 
   const [userRooms, setUserRooms] = useState<Rooms[]>([]);
-  const [roomsIn] = useState<Rooms[]>([]);
+  const [roomsIn, setRoomsIn] = useState<Rooms[]>([]);
 
   useEffect(() => {
     const fetchCollection = async () => {
         try {
             const fetchedData = await fetchData()
           setUserRooms(fetchedData.filter((dt: Rooms) => dt.hostId === user?.uid));
+          setRoomsIn(fetchedData.filter((dt: Rooms) => dt.participant.includes(user!.uid)));
         } catch (error) {
           console.error("Error fetching collection:", error);
         }
