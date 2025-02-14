@@ -6,16 +6,30 @@ import {
   VolumeMute,
   VolumeUp,
 } from "@carbon/icons-react";
-import { Tile, Button, TextInput } from "@carbon/react";
+import { Tile, Button, TextInput, Loading } from "@carbon/react";
+import { doc, updateDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import YouTube from "react-youtube";
 import { Socket } from "socket.io-client";
+import { db } from "../firebaseConfig";
+import useAuth from "../hooks/useAuth";
+interface VideoData {
+  url: string
+}
+
+interface Room {
+  roomId: string;
+  id: string
+  videoData: VideoData
+  hostId: string
+}
 
 interface Props {
   socket: Socket;
-}
+  fetchRoomData: () => Room[]}
 
-const Video: React.FC<Props> = ({ socket }) => {
+const Video: React.FC<Props> = ({ socket, fetchRoomData }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number | undefined>(0);
   const [playerSize, setPlayerSize] = useState({ width: 640, height: 360 });
@@ -24,19 +38,43 @@ const Video: React.FC<Props> = ({ socket }) => {
   const [youtubeLink, setYoutubeLink] = useState<string>("");
   const [inputError, setInputError] = useState<boolean>(false);
   const [videoError, setVideoError] = useState<boolean>(false);
+  const [isHost, setIsHost] = useState<boolean>(false)
+  
+  const [roomData, setRoomData] = useState<Room[]>([]);
 
   const playerRef = useRef<YT.Player | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const { roomId } = useParams();
+  const {user }= useAuth()
+
+  // TODO: Prevent the rerenders
   useEffect(() => {
-  
-      // Wait for the container to be available
-      const observer = new ResizeObserver(updateSize);
-      if (containerRef.current) observer.observe(containerRef.current);
-  
-      updateSize(); // Run once on mount
-  
-      window.addEventListener("resize", updateSize);
+    // Wait for the container to be available
+    const observer = new ResizeObserver(updateSize);
+    if (containerRef.current) observer.observe(containerRef.current);
+
+    updateSize(); // Run once on mount
+
+    window.addEventListener("resize", updateSize);
+
+    const fetchCollection = async () => {
+      try {
+        const fetchedData = await fetchRoomData();
+        setRoomData(fetchedData.filter((dt: Room) => dt.roomId === roomId));
+        if (roomData[0].videoData.url) {
+          setVideoId(roomData[0].videoData.url)
+        }
+        if (roomData[0].hostId === user?.uid) {
+          setIsHost(true)
+        }
+      } catch (error) {
+        console.error("Error fetching collection:", error);
+      } 
+    };
+
+    fetchCollection()
+
 
     const handlePlayEvent = (data: { playing: boolean }) => {
       setIsPlaying(data.playing);
@@ -49,16 +87,15 @@ const Video: React.FC<Props> = ({ socket }) => {
       }
     };
 
-    const handleMuteEvent = (data: { mute: boolean }) => {
-      setMute(data.mute);
+    const handleStopEvent = (data: { playing: boolean }) => {
+      setIsPlaying(data.playing);
       if (playerRef.current) {
-        if (data.mute) {
-          playerRef.current.mute();
-        } else {
-          playerRef.current.unMute();
+        if (data.playing) {
+          playerRef.current.stopVideo();
         }
       }
     };
+
 
     const updateTimeInterval = setInterval(() => {
       //    setCurrentTime(playerRef.current?.getCurrentTime())
@@ -72,7 +109,7 @@ const Video: React.FC<Props> = ({ socket }) => {
     };
 
     socket.on("PLAYEVENT", handlePlayEvent);
-    socket.on("MUTEEVENT", handleMuteEvent);
+    socket.on("STOPEVENT", handleStopEvent);
     socket.on("CURRENTTIMEEVENT", handleCurrentTime);
 
     return () => {
@@ -81,9 +118,10 @@ const Video: React.FC<Props> = ({ socket }) => {
       observer.disconnect();
 
       socket.off("PLAYEVENT", handlePlayEvent);
-      socket.off("MUTEEVENT", handleMuteEvent);
     };
-  }, [socket]);
+  }, [socket, fetchRoomData, roomId, roomData, user]);
+
+  
 
   const getYouTubeVideoId = (url: string): string | null => {
     const match = url.match(
@@ -110,9 +148,22 @@ const Video: React.FC<Props> = ({ socket }) => {
     },
   };
 
+  const updateRoom = async (
+    roomId: string,
+    newData: Partial<{ videoData: { url: string } }>
+  ) => {
+    try {
+      const roomRef = doc(db, "rooms", roomId);
+      await updateDoc(roomRef, newData);
+      console.log("Room updated successfully!");
+    } catch (error) {
+      console.error("Error updating room:", error);
+    }
+  };
+
   const onPlayerReady = (e: { target: YT.Player }) => {
     playerRef.current = e.target;
-    updateSize()
+    updateSize();
     socket.emit("PLAY", {
       playing: playerRef.current?.getPlayerState() === 1,
     });
@@ -122,7 +173,7 @@ const Video: React.FC<Props> = ({ socket }) => {
   const play = () => {
     setIsPlaying((prev) => {
       const newState = !prev;
-      socket.emit("PLAY", { playing: newState });
+      socket.emit("PLAY", { playing: newState, roomId: roomId });
 
       console.log(playerRef.current?.getCurrentTime());
       if (playerRef.current) {
@@ -136,21 +187,17 @@ const Video: React.FC<Props> = ({ socket }) => {
   };
 
   const onPlay = () => {
-    socket.emit("PLAY", { playing: true });
+    socket.emit("PLAY", { playing: true, roomId: roomId });
   };
 
   const onPause = () => {
-    socket.emit("PLAY", { playing: false });
+    socket.emit("PLAY", { playing: false, roomId: roomId });
   };
 
-  const seek = () => {
-    setCurrentTime(playerRef.current?.getCurrentTime());
-  };
 
   const muteEvent = () => {
     setMute((prev) => {
       const newState = !prev;
-      socket.emit("MUTE", { mute: newState });
 
       if (playerRef.current) {
         if (newState) {
@@ -167,9 +214,16 @@ const Video: React.FC<Props> = ({ socket }) => {
     if (videoLink.length > 0) {
       setVideoId(videoLink);
       setInputError(false);
+      updateRoom(roomData[0].id, {
+        videoData: {
+          url: videoLink
+        }
+      });
     } else {
       setInputError(true);
     }
+
+
   };
 
   const handleLinkInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,26 +236,25 @@ const Video: React.FC<Props> = ({ socket }) => {
 
   //   TODO Emit to all
   const stopVideo = () => {
-    playerRef.current?.stopVideo();
-    setIsPlaying(playerRef.current?.getPlayerState() === 0);
+    socket.emit("STOP", { playing: false, roomId: roomId });
   };
 
   return (
-    <Tile>
+  <><Tile>
       {videoId.length > 0 ? (
         <div>
           {videoError ? (
             <h2 className="text-lg text-[#da1e28]">Something went wrong</h2>
           ) : (
             <div ref={containerRef}>
-                <YouTube
-                  opts={options}
-                  videoId={videoId}
-                  onReady={onPlayerReady}
-                  onError={handeleVideoError}
-                  onPlay={onPlay}
-                  onPause={onPause}
-                />
+              <YouTube
+                opts={options}
+                videoId={videoId}
+                onReady={onPlayerReady}
+                onError={handeleVideoError}
+                onPlay={onPlay}
+                onPause={onPause}
+              />
               <div>
                 <Button
                   kind="ghost"
@@ -215,12 +268,12 @@ const Video: React.FC<Props> = ({ socket }) => {
                   hasIconOnly
                   onClick={muteEvent}
                 />
-                <Button
+               {isHost && <Button
                   kind="ghost"
                   renderIcon={StopFilledAlt}
                   hasIconOnly
                   onClick={stopVideo}
-                />
+                />}
               </div>
             </div>
           )}{" "}
@@ -243,7 +296,8 @@ const Video: React.FC<Props> = ({ socket }) => {
           </div>
         </div>
       )}
-    </Tile>
+    </Tile> 
+  </>
   );
 };
 

@@ -9,32 +9,52 @@ const cors = require('cors');
 app.use(cors());
 
 const socketIO = require('socket.io')(http, {
-    cors: {
-        origin: "http://localhost:3000"
-    }
+  cors: {
+    origin: "http://localhost:3000"
+  }
 });
 
+let users = []
+
 socketIO.on('connection', (socket) => {
-    console.log(`⚡: ${socket.id} user just connected!`);
-    socket.on('disconnect', () => {
-      console.log('🔥: A user disconnected');
-    });
+  console.log(`⚡: ${socket.id} user just connected!`);
 
-    socket.on('message', data => {
-       socketIO.emit('messageResponse', data)
-    })
 
-    socket.on('PLAY', data => {
-      socketIO.emit('PLAYEVENT' , data)
-    })
+  socket.on('disconnect', () => {
+    console.log('🔥: A user disconnected');
+    users = users.filter((user) => user.socketId !== socket.id);
+  });
 
-    socket.on('MUTE', data => {
-      socketIO.emit('MUTEEVENT', data)
-    })
 
-    socket.on('CURRENTTIME', data => {
-      socketIO.emit('CURRENTTIMEEVENT', data)
-    })
+  socket.on('join', data => {
+    const { user, roomId } = data
+    users.push({...data, socketId: socket.id})
+    console.log(users)
+    socket.join(roomId)
+    socketIO.to(data.roomId).emit('newMemberResponse', users)
+    console.log(`${user} joined in room ${roomId}`)
+  })
+
+
+  socket.on('message', data => {
+    console.log(data)
+    console.log(`Message in room ${data.roomId}:`, data);
+    socketIO.to(data.roomId).emit('messageResponse', data)
+  })
+
+
+  socket.on('PLAY', data => {
+    socketIO.to(data.roomId).emit('PLAYEVENT', data)
+  })
+
+
+  socket.on('STOP', data => {
+    socketIO.to(data.roomId).emit('STOPEVENT', data)
+  })
+
+  socket.on('CURRENTTIME', data => {
+    socketIO.to(data.roomId).emit('CURRENTTIMEEVENT', data)
+  })
 });
 
 app.get('/api', (req, res) => {

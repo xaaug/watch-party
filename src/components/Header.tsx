@@ -26,8 +26,6 @@ const Header: React.FC = () => {
         }
       };
 
-      console.log(user?.displayName)
-
     return (<>
     <header className='bg-[#161616]  px-6 py-3'>
         <nav className='flex justify-between items-center '>
