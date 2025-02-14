@@ -1,0 +1,9 @@
+{
+    "rewrites": [
+      { "source": "/room/:id", "destination": "/" },
+      { "source": "/rooms", "destination": "/" },
+      { "source": "/login", "destination": "/" 
+      }
+    ]
+  }
+  
