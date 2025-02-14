@@ -1,5 +1,8 @@
 {
     "private": true,
-    "workspaces": ["server", "frontend"]
+    "workspaces": ["server", "frontend"],
+    "scripts": {
+  "start": "node backend/server.js"
+}
   }
   
