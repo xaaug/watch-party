@@ -16,6 +16,10 @@ const socketIO = require('socket.io')(http, {
 
 let users = []
 
+app.get("/", (req, res) => {
+  res.send("Socket.io Server is running!");
+});
+
 socketIO.on('connection', (socket) => {
   console.log(`⚡: ${socket.id} user just connected!`);
 
