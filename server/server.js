@@ -1,3 +1,7 @@
+require('dotenv').config();
+
+console.log(process.env.FRONTEND_ORIGIN);
+
 const express = require('express');
 const app = express();
 const PORT = 4000;
@@ -10,7 +14,7 @@ app.use(cors());
 
 const socketIO = require('socket.io')(http, {
   cors: {
-    origin: "https://watch-party-frontend-rosy.vercel.app"
+    origin: process.env.FRONTEND_ORIGIN,
   }
 });
 

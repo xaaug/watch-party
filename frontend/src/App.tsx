@@ -10,7 +10,7 @@ import {io} from "socket.io-client";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import NotFound from "./pages/NotFoundPage";
-const socket = io("https://watch-party-2.onrender.com");
+const socket = io(import.meta.env.VITE_API_BASE_URL);
 
 
 const App: React.FC = () => {
